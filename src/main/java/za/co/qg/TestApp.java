@@ -1,6 +1,8 @@
 package za.co.qg;
 
+import com.google.gson.Gson;
 import org.apache.activemq.ActiveMQConnectionFactory;
+import sun.applet.resources.MsgAppletViewer_zh_TW;
 
 import javax.jms.*;
 
@@ -9,7 +11,6 @@ public class TestApp {
         try {
             new TestApp().execute();
         } catch (JMSException e) {
-            System.out.println("bad");
             e.printStackTrace();
         }
     }
@@ -29,7 +30,8 @@ public class TestApp {
                     System.out.println("textMessage = " + textMessage.getText());
                     if (message.getJMSReplyTo() != null) {
                         MessageProducer producer = session.createProducer(message.getJMSReplyTo());
-                        producer.send(session.createTextMessage("I responded"));
+                        String someRandomJson = new Gson().toJson(getResponse());
+                        producer.send(session.createTextMessage(someRandomJson));
                         System.out.println("Responded");
                     }
                     message.acknowledge();
@@ -39,5 +41,20 @@ public class TestApp {
             }
         });
 
+    }
+
+    private MatchResult getResponse() {
+        MatchResult matchResult = new MatchResult();
+        matchResult.setCarrier("carrier");
+        matchResult.setAccountNumber("123");
+        matchResult.setInvoiceNumber("234");
+        matchResult.setPolicyNumber("234");
+        matchResult.setFirstName("hi");
+        matchResult.setLastName("last");
+        matchResult.setCompanyName("comp");
+        matchResult.setAmount(12);
+        matchResult.setMatchType("EXACT");
+        matchResult.setSystemOfRecord("Google");
+        return matchResult;
     }
 }
