@@ -21,8 +21,9 @@ public class TestApp {
         Connection connection = connectionFactory.createConnection();
         connection.start();
         final Session session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
-        Queue queue = session.createQueue("ding");
-        MessageConsumer consumer = session.createConsumer(queue);
+        Queue queue = session.createQueue("expectedReceiptsService.in");
+//        MessageConsumer consumer = session.createConsumer(queue);
+        MessageConsumer consumer = session.createConsumer(queue, "endpoint='BC'");
         consumer.setMessageListener(new MessageListener() {
             public void onMessage(Message message) {
                 TextMessage textMessage = (TextMessage) message;
@@ -31,7 +32,9 @@ public class TestApp {
                     if (message.getJMSReplyTo() != null) {
                         MessageProducer producer = session.createProducer(message.getJMSReplyTo());
                         String someRandomJson = new Gson().toJson(getResponse());
-                        producer.send(session.createTextMessage(someRandomJson));
+                        TextMessage responseMessage = session.createTextMessage(someRandomJson);
+                        responseMessage.setJMSCorrelationID(textMessage.getJMSCorrelationID());
+                        producer.send(responseMessage);
                         System.out.println("Responded");
                     }
                     message.acknowledge();
@@ -54,7 +57,7 @@ public class TestApp {
         matchResult.setCompanyName("comp");
         matchResult.setAmount(12);
         matchResult.setMatchType("EXACT");
-        matchResult.setSystemOfRecord("Google");
+        matchResult.setSystemOfRecord("BC");
         return matchResult;
     }
 }
